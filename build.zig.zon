@@ -1,0 +1,20 @@
+.{
+    .name = "picohttpparser",
+    .version = "0.0.0",
+    .dependencies = .{
+        .upstream = .{
+            .url = "git+https://github.com/h2o/picohttpparser?ref=master#f8d0513f1a7a111f2597d643b073935a8afaf9e5",
+            .hash = "1220783b493dce554f478bef55bdd94acd7dbb753dc8bc17dc2fbc57709b2a8a0909",
+        },
+        .picotest = .{
+            .url = "git+https://github.com/h2o/picotest?ref=master#a99858e0c33b97b24cd09ceae729f2be33ec01e1",
+            .hash = "1220d93e9c4cfccdc0bf3ea0c30f85785f8e7e0e0096b1d2fe16a9713b7261667c33",
+        },
+    },
+    .minimum_zig_version = "0.13.0",
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+    },
+}

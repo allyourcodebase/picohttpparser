@@ -36,6 +36,18 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    // NOTE(vincent): because picotest is actually a submodule in the picohttpparser repository
+    // the test.c program expects to find the picotest.h under the picotest directory.
+    // However in our case we have picohttpparser and picotest as two distinct dependency, and
+    // this "picotest" directory doesn't exist in the picotest repository.
+    //
+    // So, because this directory doesn't exist anywhere, I have to create it: this is what the following does.
+    //
+    // See the upstream documentation: https://ziglang.org/learn/build-system/#write-files
+
+    const wf = b.addWriteFiles();
+    _ = wf.addCopyFile(picotest.path("picotest.h"), "picotest/picotest.h");
+
     const tests = b.addExecutable(.{
         .name = "test-bin",
         .target = target,
@@ -43,7 +55,7 @@ pub fn build(b: *std.Build) void {
     });
     tests.linkLibrary(lib);
     tests.addIncludePath(upstream.path("."));
-    tests.addIncludePath(picotest.path("."));
+    tests.addIncludePath(wf.getDirectory());
     tests.addCSourceFiles(.{
         .root = picotest.path("."),
         .files = &[_][]const u8{
@@ -64,6 +76,8 @@ pub fn build(b: *std.Build) void {
     });
 
     const run_tests = b.addRunArtifact(tests);
+    run_tests.step.dependOn(&wf.step);
+
     const test_step = b.step("test", "Run the tests");
     test_step.dependOn(&run_tests.step);
 }

@@ -10,6 +10,8 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const want_picotest = b.option(bool, "want_picotest", "Require the picotest dependency (only useful in tests)") orelse false;
+
     const upstream = b.dependency("upstream", .{
         .target = target,
         .optimize = optimize,
@@ -36,51 +38,54 @@ pub fn build(b: *std.Build) void {
 
     // Tests
 
-    const picotest = b.dependency("picotest", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    if (want_picotest) {
+        if (b.lazyDependency("picotest", .{
+            .target = target,
+            .optimize = optimize,
+        })) |dep| {
 
-    // NOTE(vincent): because picotest is actually a submodule in the picohttpparser repository
-    // the test.c program expects to find the picotest.h under the picotest directory.
-    // However in our case we have picohttpparser and picotest as two distinct dependency, and
-    // this "picotest" directory doesn't exist in the picotest repository.
-    //
-    // So, because this directory doesn't exist anywhere, I have to create it: this is what the following does.
-    //
-    // See the upstream documentation: https://ziglang.org/learn/build-system/#write-files
+            // NOTE(vincent): because picotest is actually a submodule in the picohttpparser repository
+            // the test.c program expects to find the picotest.h under the picotest directory.
+            // However in our case we have picohttpparser and picotest as two distinct dependency, and
+            // this "picotest" directory doesn't exist in the picotest repository.
+            //
+            // So, because this directory doesn't exist anywhere, I have to create it: this is what the following does.
+            //
+            // See the upstream documentation: https://ziglang.org/learn/build-system/#write-files
 
-    const wf = b.addWriteFiles();
-    _ = wf.addCopyFile(picotest.path("picotest.h"), "picotest/picotest.h");
+            const wf = b.addWriteFiles();
+            _ = wf.addCopyFile(dep.path("picotest.h"), "picotest/picotest.h");
 
-    const test_bin = b.addExecutable(.{
-        .name = "test-bin",
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-        .single_threaded = true,
-    });
-    test_bin.linkLibrary(lib);
-    test_bin.addIncludePath(upstream.path("."));
-    test_bin.addIncludePath(wf.getDirectory());
-    test_bin.addCSourceFiles(.{
-        .root = picotest.path("."),
-        .files = &[_][]const u8{
-            "picotest.c",
-        },
-        .flags = c_flags,
-    });
-    test_bin.addCSourceFiles(.{
-        .root = upstream.path("."),
-        .files = &[_][]const u8{
-            "test.c",
-        },
-        .flags = c_flags,
-    });
+            const test_bin = b.addExecutable(.{
+                .name = "test-bin",
+                .target = target,
+                .optimize = optimize,
+                .link_libc = true,
+                .single_threaded = true,
+            });
+            test_bin.linkLibrary(lib);
+            test_bin.addIncludePath(upstream.path("."));
+            test_bin.addIncludePath(wf.getDirectory());
+            test_bin.addCSourceFiles(.{
+                .root = dep.path("."),
+                .files = &[_][]const u8{
+                    "picotest.c",
+                },
+                .flags = c_flags,
+            });
+            test_bin.addCSourceFiles(.{
+                .root = upstream.path("."),
+                .files = &[_][]const u8{
+                    "test.c",
+                },
+                .flags = c_flags,
+            });
 
-    const run_tests = b.addRunArtifact(test_bin);
-    run_tests.step.dependOn(&wf.step);
+            const run_tests = b.addRunArtifact(test_bin);
+            run_tests.step.dependOn(&wf.step);
 
-    const test_step = b.step("test", "Run the tests");
-    test_step.dependOn(&run_tests.step);
+            const test_step = b.step("test", "Run the tests");
+            test_step.dependOn(&run_tests.step);
+        }
+    }
 }

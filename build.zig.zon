@@ -9,6 +9,7 @@
         .picotest = .{
             .url = "git+https://github.com/h2o/picotest?ref=master#a99858e0c33b97b24cd09ceae729f2be33ec01e1",
             .hash = "1220d93e9c4cfccdc0bf3ea0c30f85785f8e7e0e0096b1d2fe16a9713b7261667c33",
+            .lazy = true,
         },
     },
     .minimum_zig_version = "0.13.0",

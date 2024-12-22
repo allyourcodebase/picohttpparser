@@ -21,4 +21,4 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
       - run: zig fmt --check .
       - run: zig build
-      - run: zig build test
+      - run: zig build -Dwant_picotest test --summary all

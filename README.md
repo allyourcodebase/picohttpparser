@@ -1,6 +1,6 @@
 # picohttpparser
 
-This is https://github.com/h2o/picohttpparser packaged for [Zig](https://ziglang.org)
+This is [picohttpparser](https://github.com/h2o/picohttpparser) packaged for [Zig](https://ziglang.org)
 
 # Installation
 

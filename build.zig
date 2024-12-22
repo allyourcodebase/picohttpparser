@@ -1,5 +1,11 @@
 const std = @import("std");
 
+const c_flags = &[_][]const u8{
+    "-Wall",
+    // TODO(vincent): upstream uses this but it's broken when building with Zig: https://github.com/ziglang/zig/issues/11403
+    // "-fsanitize=address",
+};
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -9,24 +15,28 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const lib = b.addStaticLibrary(.{
-        .name = "picohttpparser",
+    const mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
+        .single_threaded = true,
+        .sanitize_c = true,
     });
-    lib.addIncludePath(b.path("."));
-    lib.linkLibC();
-    lib.addCSourceFiles(.{
+    mod.addIncludePath(b.path("."));
+    mod.addCSourceFiles(.{
         .root = upstream.path("."),
         .files = &[_][]const u8{
             "picohttpparser.c",
         },
-        .flags = &[_][]const u8{
-            "-Wall", "-fsanitize=address,undefined",
-        },
+        .flags = c_flags,
     });
-    lib.installHeader(upstream.path("picohttpparser.h"), "picohttpparser.h");
 
+    const lib = b.addStaticLibrary(.{
+        .name = "picohttpparser",
+        .root_module = mod,
+    });
+    lib.linkLibC();
+    lib.installHeader(upstream.path("picohttpparser.h"), "picohttpparser.h");
     b.installArtifact(lib);
 
     // Tests
@@ -48,34 +58,37 @@ pub fn build(b: *std.Build) void {
     const wf = b.addWriteFiles();
     _ = wf.addCopyFile(picotest.path("picotest.h"), "picotest/picotest.h");
 
-    const tests = b.addExecutable(.{
-        .name = "test-bin",
+    const test_module = b.createModule(.{
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
+        .single_threaded = true,
+        .sanitize_c = true,
     });
-    tests.linkLibrary(lib);
-    tests.addIncludePath(upstream.path("."));
-    tests.addIncludePath(wf.getDirectory());
-    tests.addCSourceFiles(.{
+    test_module.linkLibrary(lib);
+    test_module.addIncludePath(upstream.path("."));
+    test_module.addIncludePath(wf.getDirectory());
+    test_module.addCSourceFiles(.{
         .root = picotest.path("."),
         .files = &[_][]const u8{
             "picotest.c",
         },
-        .flags = &[_][]const u8{
-            "-Wall", "-fsanitize=address,undefined",
-        },
+        .flags = c_flags,
     });
-    tests.addCSourceFiles(.{
+    test_module.addCSourceFiles(.{
         .root = upstream.path("."),
         .files = &[_][]const u8{
             "test.c",
         },
-        .flags = &[_][]const u8{
-            "-Wall", "-fsanitize=address,undefined",
-        },
+        .flags = c_flags,
     });
 
-    const run_tests = b.addRunArtifact(tests);
+    const test_bin = b.addExecutable(.{
+        .name = "test-bin",
+        .root_module = test_module,
+    });
+
+    const run_tests = b.addRunArtifact(test_bin);
     run_tests.step.dependOn(&wf.step);
 
     const test_step = b.step("test", "Run the tests");

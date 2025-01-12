@@ -7,7 +7,7 @@ This is [picohttpparser](https://github.com/h2o/picohttpparser) packaged for [Zi
 Use `zig fetch`:
 
 ```
-zig fetch --save git+https://github.com/vrischmann/picohttpparser#master
+zig fetch --save git+https://github.com/allyourcodebase/picohttpparser#master
 ```
 
 You can then import `picohttpparser` in your `build.zig`:

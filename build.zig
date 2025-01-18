@@ -22,7 +22,6 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
         .single_threaded = true,
     });
-    lib.addIncludePath(b.path("."));
     lib.addCSourceFiles(.{
         .root = upstream.path("."),
         .files = &[_][]const u8{

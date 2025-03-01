@@ -2,6 +2,11 @@
 
 This is [picohttpparser](https://github.com/h2o/picohttpparser) packaged for [Zig](https://ziglang.org)
 
+# zig version compatibility
+
+* master targets Zig 0.13.0
+* zig-master targets Zig master
+
 # Installation
 
 Use `zig fetch`:

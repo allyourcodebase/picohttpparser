@@ -1,5 +1,6 @@
 .{
-    .name = "picohttpparser",
+    .name = .picohttpparser,
+    .fingerprint = 0x1b2f3dfe3b3346af,
     .version = "0.0.0",
     .dependencies = .{
         .upstream = .{
@@ -11,7 +12,7 @@
             .hash = "1220d93e9c4cfccdc0bf3ea0c30f85785f8e7e0e0096b1d2fe16a9713b7261667c33",
         },
     },
-    .minimum_zig_version = "0.13.0",
+    .minimum_zig_version = "0.14.0",
 
     .paths = .{
         "build.zig",

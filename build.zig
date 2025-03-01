@@ -15,22 +15,27 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const lib = b.addStaticLibrary(.{
-        .name = "picohttpparser",
+    const lib_mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
         .link_libc = true,
         .single_threaded = true,
     });
-    lib.addCSourceFiles(.{
+    lib_mod.addCSourceFiles(.{
         .root = upstream.path("."),
         .files = &[_][]const u8{
             "picohttpparser.c",
         },
         .flags = c_flags,
     });
-    lib.linkLibC();
+
+    const lib = b.addLibrary(.{
+        .linkage = .static,
+        .name = "picohttpparser",
+        .root_module = lib_mod,
+    });
     lib.installHeader(upstream.path("picohttpparser.h"), "picohttpparser.h");
+
     b.installArtifact(lib);
 
     // Tests
@@ -52,29 +57,33 @@ pub fn build(b: *std.Build) void {
     const wf = b.addWriteFiles();
     _ = wf.addCopyFile(picotest.path("picotest.h"), "picotest/picotest.h");
 
-    const test_bin = b.addExecutable(.{
-        .name = "test-bin",
+    const test_mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
         .link_libc = true,
         .single_threaded = true,
     });
-    test_bin.linkLibrary(lib);
-    test_bin.addIncludePath(upstream.path("."));
-    test_bin.addIncludePath(wf.getDirectory());
-    test_bin.addCSourceFiles(.{
+    test_mod.linkLibrary(lib);
+    test_mod.addIncludePath(upstream.path("."));
+    test_mod.addIncludePath(wf.getDirectory());
+    test_mod.addCSourceFiles(.{
         .root = picotest.path("."),
         .files = &[_][]const u8{
             "picotest.c",
         },
         .flags = c_flags,
     });
-    test_bin.addCSourceFiles(.{
+    test_mod.addCSourceFiles(.{
         .root = upstream.path("."),
         .files = &[_][]const u8{
             "test.c",
         },
         .flags = c_flags,
+    });
+
+    const test_bin = b.addExecutable(.{
+        .name = "test-bin",
+        .root_module = test_mod,
     });
 
     const run_tests = b.addRunArtifact(test_bin);

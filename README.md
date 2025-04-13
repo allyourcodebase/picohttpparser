@@ -4,7 +4,7 @@ This is [picohttpparser](https://github.com/h2o/picohttpparser) packaged for [Zi
 
 # zig version compatibility
 
-* master targets Zig 0.13.0
+* master targets Zig 0.14.0
 * zig-master targets Zig master
 
 # Installation
